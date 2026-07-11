@@ -9,18 +9,23 @@
    * Config
    * ---------------------------------------------------------------------- */
 
+  /* Each category carries two accents: one tuned for the dark theme, one
+     darkened for the light theme so it still passes as readable on paper. */
   const CATEGORIES = [
-    { id: 'all',         label: 'All',         accent: '#7c5cff' },
-    { id: 'inspiration', label: 'Inspiration', accent: '#7c5cff' },
-    { id: 'stoic',       label: 'Stoic',       accent: '#22d3ee' },
-    { id: 'wisdom',      label: 'Wisdom',      accent: '#60a5fa' },
-    { id: 'grit',        label: 'Grit',        accent: '#fb7185' },
-    { id: 'creativity',  label: 'Creativity',  accent: '#f472b6' },
-    { id: 'humor',       label: 'Humor',       accent: '#fbbf24' }
+    { id: 'all',         label: 'All',         dark: '#7c5cff', light: '#6d4bf0' },
+    { id: 'inspiration', label: 'Inspiration', dark: '#7c5cff', light: '#6d4bf0' },
+    { id: 'stoic',       label: 'Stoic',       dark: '#22d3ee', light: '#0e97b4' },
+    { id: 'wisdom',      label: 'Wisdom',      dark: '#60a5fa', light: '#2563eb' },
+    { id: 'grit',        label: 'Grit',        dark: '#fb7185', light: '#e11d48' },
+    { id: 'creativity',  label: 'Creativity',  dark: '#f472b6', light: '#db2777' },
+    { id: 'humor',       label: 'Humor',       dark: '#fbbf24', light: '#c2740a' }
   ];
 
-  const LS_FAVS = 'lucid.favs.v1';
-  const LS_CAT  = 'lucid.cat.v1';
+  const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
+
+  const LS_FAVS  = 'lucid.favs.v1';
+  const LS_CAT   = 'lucid.cat.v1';
+  const LS_THEME = 'lucid.theme.v1';
   const SWIPE_THRESHOLD = 56;      // px before a swipe commits
 
   /* ---------------------------------------------------------------------- *
@@ -45,6 +50,8 @@
     todayBtn:    $('todayBtn'),
     favViewBtn:  $('favViewBtn'),
     favViewBtn2: $('favViewBtn2'),
+    themeBtn:    $('themeBtn'),
+    themeColor:  $('themeColor'),
     favCount:    $('favCount'),
     drawer:      $('drawer'),
     drawerList:  $('drawerList'),
@@ -82,6 +89,7 @@
       return;
     }
 
+    initTheme();
     renderChips();
     rebuildPool();
     updateFavCount();
@@ -89,6 +97,65 @@
     bindEvents();
     observeResize();
     registerSW();
+  }
+
+  /* ---------------------------------------------------------------------- *
+   * Theme
+   * ---------------------------------------------------------------------- *
+   * The inline script in index.html already set data-theme before first
+   * paint (no flash). Here we just sync the button and wire up the toggle.
+   * With no saved choice, we follow the OS and keep following it live.
+   */
+
+  const currentTheme = () => el.root.getAttribute('data-theme') || 'dark';
+
+  function initTheme() {
+    syncThemeButton();
+
+    // No manual override? Then track the OS setting as it changes.
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const onSystemChange = (e) => {
+      if (savedTheme()) return;                 // user has chosen; leave them alone
+      applyTheme(e.matches ? 'light' : 'dark', false);
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
+    else if (mq.addListener) mq.addListener(onSystemChange);
+  }
+
+  function savedTheme() {
+    try { return localStorage.getItem(LS_THEME); } catch { return null; }
+  }
+
+  function applyTheme(theme, persist = true) {
+    el.root.setAttribute('data-theme', theme);
+    if (el.themeColor) el.themeColor.setAttribute('content', THEME_BG[theme]);
+    if (persist) {
+      try { localStorage.setItem(LS_THEME, theme); } catch { /* private mode */ }
+    }
+    syncThemeButton();
+
+    // Category accents differ per theme — re-apply for the quote on screen.
+    const q = state.history[state.cursor];
+    if (q) setAccent(accentFor(q));
+  }
+
+  function toggleTheme() {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    haptic(10);
+    toast(next === 'light' ? 'Light' : 'Dark');
+  }
+
+  function syncThemeButton() {
+    if (!el.themeBtn) return;
+    const light = currentTheme() === 'light';
+    el.themeBtn.setAttribute('aria-pressed', String(light));
+    el.themeBtn.setAttribute('aria-label', light ? 'Switch to dark theme' : 'Switch to light theme');
+  }
+
+  function accentFor(q) {
+    const cat = CATEGORIES.find((c) => c.id === q.c) || CATEGORIES[0];
+    return cat[currentTheme()] || cat.dark;
   }
 
   /* ---------------------------------------------------------------------- *
@@ -154,7 +221,7 @@
     if (!q) return;
     const cat = CATEGORIES.find((c) => c.id === q.c) || CATEGORIES[0];
 
-    setAccent(cat.accent);
+    setAccent(accentFor(q));
 
     el.quoteText.textContent = q.t;
     el.quoteAuthor.textContent = q.a;
@@ -446,26 +513,55 @@
       const W = 1080, H = 1350;
       const cv = el.canvas;
       const ctx = cv.getContext('2d');
-      const cat = CATEGORIES.find((c) => c.id === q.c) || CATEGORIES[0];
+      const accent = accentFor(q);
+      const light = currentTheme() === 'light';
+
+      /* The shared image follows whatever theme you're in — a light-mode
+         card renders on warm paper, a dark-mode card on charcoal. */
+      const T = light
+        ? {
+            base:  '#f2efe9',
+            aurora: [0.30, 0.16, 0.18, 0.10],
+            scrim: ['rgba(255,253,249,.42)', 'rgba(255,253,249,.10)', 'rgba(255,253,249,.55)'],
+            glass: ['rgba(255,255,255,.80)', 'rgba(255,255,255,.55)', 'rgba(255,255,255,.72)'],
+            edge:  'rgba(28,24,40,.10)',
+            ink:   '#17141f',
+            weight: 400,
+            rule:  'rgba(28,24,40,.28)',
+            author:'rgba(23,20,31,.62)',
+            brand: 'rgba(23,20,31,.38)'
+          }
+        : {
+            base:  '#08080b',
+            aurora: [0.55, 0.28, 0.30, 0.16],
+            scrim: ['rgba(6,6,10,.55)', 'rgba(6,6,10,.20)', 'rgba(6,6,10,.72)'],
+            glass: ['rgba(255,255,255,.09)', 'rgba(255,255,255,.03)', 'rgba(255,255,255,.06)'],
+            edge:  'rgba(255,255,255,.14)',
+            ink:   '#f4f3f7',
+            weight: 300,
+            rule:  'rgba(255,255,255,.38)',
+            author:'rgba(244,243,247,.62)',
+            brand: 'rgba(244,243,247,.34)'
+          };
 
       const draw = () => {
         ctx.clearRect(0, 0, W, H);
 
         // Base
-        ctx.fillStyle = '#08080b';
+        ctx.fillStyle = T.base;
         ctx.fillRect(0, 0, W, H);
 
         // Aurora
-        blob(ctx, -60, -40, 700, cat.accent, 0.55);
-        blob(ctx, W + 60, 300, 620, '#22d3ee', 0.28);
-        blob(ctx, 180, H + 60, 660, '#f472b6', 0.30);
-        blob(ctx, W - 60, H - 120, 420, '#fbbf24', 0.16);
+        blob(ctx, -60, -40, 700, accent, T.aurora[0]);
+        blob(ctx, W + 60, 300, 620, light ? '#0e97b4' : '#22d3ee', T.aurora[1]);
+        blob(ctx, 180, H + 60, 660, light ? '#db2777' : '#f472b6', T.aurora[2]);
+        blob(ctx, W - 60, H - 120, 420, light ? '#c2740a' : '#fbbf24', T.aurora[3]);
 
         // Scrim
         const scrim = ctx.createLinearGradient(0, 0, 0, H);
-        scrim.addColorStop(0, 'rgba(6,6,10,.55)');
-        scrim.addColorStop(0.45, 'rgba(6,6,10,.20)');
-        scrim.addColorStop(1, 'rgba(6,6,10,.72)');
+        scrim.addColorStop(0, T.scrim[0]);
+        scrim.addColorStop(0.45, T.scrim[1]);
+        scrim.addColorStop(1, T.scrim[2]);
         ctx.fillStyle = scrim;
         ctx.fillRect(0, 0, W, H);
 
@@ -473,13 +569,13 @@
         const P = 72, PW = W - P * 2, PH = H - P * 2;
         roundRect(ctx, P, P, PW, PH, 48);
         const glass = ctx.createLinearGradient(P, P, P + PW, P + PH);
-        glass.addColorStop(0, 'rgba(255,255,255,.09)');
-        glass.addColorStop(0.5, 'rgba(255,255,255,.03)');
-        glass.addColorStop(1, 'rgba(255,255,255,.06)');
+        glass.addColorStop(0, T.glass[0]);
+        glass.addColorStop(0.5, T.glass[1]);
+        glass.addColorStop(1, T.glass[2]);
         ctx.fillStyle = glass;
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.strokeStyle = T.edge;
         ctx.stroke();
 
         // Quote text — auto-sized to fit
@@ -501,33 +597,33 @@
         // Quote glyph, anchored just above the text block
         ctx.save();
         ctx.globalAlpha = 0.36;
-        ctx.fillStyle = cat.accent;
+        ctx.fillStyle = accent;
         ctx.font = '700 120px Georgia, serif';
         ctx.fillText('“', W / 2, top - 76);
         ctx.restore();
 
-        ctx.fillStyle = '#f4f3f7';
-        ctx.font = `300 ${size}px Fraunces, Georgia, serif`;
+        ctx.fillStyle = T.ink;
+        ctx.font = `${T.weight} ${size}px Fraunces, Georgia, serif`;
         let y = top + lh / 2;
         lines.forEach((ln) => { ctx.fillText(ln, W / 2, y); y += lh; });
 
         // Rule
         const ruleY = top + blockH + 56;
         const rg = ctx.createLinearGradient(W / 2 - 70, 0, W / 2 + 70, 0);
-        rg.addColorStop(0, 'rgba(255,255,255,0)');
-        rg.addColorStop(0.5, 'rgba(255,255,255,.38)');
-        rg.addColorStop(1, 'rgba(255,255,255,0)');
+        rg.addColorStop(0, 'rgba(0,0,0,0)');
+        rg.addColorStop(0.5, T.rule);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = rg;
         ctx.fillRect(W / 2 - 70, ruleY, 140, 2);
 
         // Author
-        ctx.fillStyle = 'rgba(244,243,247,.62)';
+        ctx.fillStyle = T.author;
         ctx.font = '500 26px Inter, sans-serif';
         if ('letterSpacing' in ctx) ctx.letterSpacing = '5px';
         ctx.fillText(q.a.toUpperCase(), W / 2, ruleY + 46);
 
         // Footer brand
-        ctx.fillStyle = 'rgba(244,243,247,.34)';
+        ctx.fillStyle = T.brand;
         ctx.font = '600 22px Inter, sans-serif';
         if ('letterSpacing' in ctx) ctx.letterSpacing = '7px';
         ctx.fillText('LUCID', W / 2, H - 118);
@@ -536,7 +632,7 @@
         // Accent dot above the brand
         ctx.beginPath();
         ctx.arc(W / 2, H - 158, 5, 0, Math.PI * 2);
-        ctx.fillStyle = cat.accent;
+        ctx.fillStyle = accent;
         ctx.fill();
 
         cv.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
@@ -642,7 +738,6 @@
     el.card.addEventListener('pointerup', onUp);
     el.card.addEventListener('pointercancel', onUp);
   }
-
   function bounce() {
     el.card.style.transition = 'transform .38s cubic-bezier(.22,1,.36,1)';
     el.card.style.transform = 'translate3d(0, 10px, 0)';
@@ -684,6 +779,7 @@
       toast('Quote of the day');
     });
 
+    el.themeBtn.addEventListener('click', toggleTheme);
     el.favViewBtn.addEventListener('click', toggleDrawer);
     el.favViewBtn2.addEventListener('click', toggleDrawer);
     el.drawerClose.addEventListener('click', closeDrawer);
@@ -706,6 +802,7 @@
         e.preventDefault(); nextQuote(-1);
       } else if (e.key.toLowerCase() === 's') { toggleFav(); }
       else if (e.key.toLowerCase() === 'c') { copyQuote(); }
+      else if (e.key.toLowerCase() === 't') { toggleTheme(); }
       else if (e.key === 'Escape') { closeDrawer(); }
     });
 
@@ -747,7 +844,7 @@
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol === 'file:') return;     // SW can't run from file://
     window.addEventListener('load', () => {
-           navigator.serviceWorker.register('./sw.js').catch(() => { /* offline is a bonus */ });
+      navigator.serviceWorker.register('./sw.js').catch(() => { /* offline is a bonus */ });
     });
   }
 
