@@ -1,0 +1,47 @@
+name: Deploy Lucid to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:            # lets you redeploy by hand from the GitHub mobile app
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sanity check: a typo in quotes.js should fail the build, not the site.
+      - name: Validate quotes.js syntax
+        run: node --check quotes.js
+
+      - name: Bump service-worker cache (so phones get the new build)
+        run: |
+          STAMP=$(date +%Y%m%d%H%M%S)
+          sed -i "s/const CACHE = '.*';/const CACHE = 'lucid-${STAMP}';/" sw.js
+          echo "Cache set to lucid-${STAMP}"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

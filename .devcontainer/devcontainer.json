@@ -1,0 +1,27 @@
+{
+  "name": "Lucid",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+
+  "postAttachCommand": "npx --yes serve -l 5173 .",
+
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Lucid (preview)",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "ritwickdey.LiveServer"
+      ],
+      "settings": {
+        "editor.wordWrap": "on",
+        "editor.fontSize": 14
+      }
+    }
+  }
+}
