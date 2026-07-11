@@ -52,6 +52,8 @@
     favViewBtn2: $('favViewBtn2'),
     themeBtn:    $('themeBtn'),
     themeColor:  $('themeColor'),
+    authorSel:   $('authorSelect'),
+    poolCount:   $('poolCount'),
     favCount:    $('favCount'),
     drawer:      $('drawer'),
     drawerList:  $('drawerList'),
@@ -70,6 +72,7 @@
 
   const state = {
     category: loadCategory(),
+    author: 'all',        // not persisted: each launch starts unfiltered
     pool: [],
     history: [],          // quotes we've shown, oldest -> newest
     cursor: -1,           // index into history
@@ -91,6 +94,7 @@
 
     initTheme();
     renderChips();
+    renderAuthors();
     rebuildPool();
     updateFavCount();
     showQuoteOfTheDay();     // first thing you see each day is the daily quote
@@ -163,10 +167,87 @@
    * ---------------------------------------------------------------------- */
 
   function rebuildPool() {
-    state.pool = state.category === 'all'
+    let list = state.category === 'all'
       ? ALL.slice()
       : ALL.filter((q) => q.c === state.category);
-    if (!state.pool.length) state.pool = ALL.slice();
+
+    if (state.author !== 'all') {
+      const byAuthor = list.filter((q) => q.a === state.author);
+      if (byAuthor.length) list = byAuthor;
+      else state.author = 'all';          // belt-and-braces; renderAuthors prevents this
+    }
+
+    state.pool = list.length ? list : ALL.slice();
+    updatePoolCount();
+  }
+
+  /* ---------------------------------------------------------------------- *
+   * Thinkers
+   * ---------------------------------------------------------------------- *
+   * The dropdown is always scoped to the category you're on, so it can only
+   * ever offer thinkers who actually have something to say there. No empty
+   * intersections, no dead ends.
+   */
+
+  function authorsIn(categoryId) {
+    const src = categoryId === 'all' ? ALL : ALL.filter((q) => q.c === categoryId);
+    const counts = new Map();
+    src.forEach((q) => counts.set(q.a, (counts.get(q.a) || 0) + 1));
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }
+
+  /** Rebuilds the options for the current category. Returns the dropped
+   *  author's name if the current pick doesn't survive the new category. */
+  function renderAuthors() {
+    const authors = authorsIn(state.category);
+    let dropped = null;
+
+    if (state.author !== 'all' && !authors.some((a) => a.name === state.author)) {
+      dropped = state.author;
+      state.author = 'all';
+    }
+
+    el.authorSel.innerHTML = '';
+
+    const all = document.createElement('option');
+    all.value = 'all';
+    all.textContent = 'All thinkers';
+    el.authorSel.appendChild(all);
+
+    authors.forEach((a) => {
+      const o = document.createElement('option');
+      o.value = a.name;
+      o.textContent = a.count > 1 ? `${a.name} (${a.count})` : a.name;
+      el.authorSel.appendChild(o);
+    });
+
+    el.authorSel.value = state.author;
+    el.authorSel.classList.toggle('is-on', state.author !== 'all');
+    return dropped;
+  }
+
+  function selectAuthor(name) {
+    if (name === state.author) return;
+    state.author = name;
+    el.authorSel.classList.toggle('is-on', name !== 'all');
+
+    rebuildPool();
+    state.history = [];
+    state.cursor = -1;
+    state.isToday = false;
+
+    haptic(8);
+    closeDrawer();
+    nextQuote(1);
+    toast(name === 'all' ? 'All thinkers' : name);
+  }
+
+  function updatePoolCount() {
+    if (!el.poolCount) return;
+    const n = state.pool.length;
+    el.poolCount.textContent = n === 1 ? '1 quote' : n + ' quotes';
   }
 
   function pickRandom() {
@@ -316,13 +397,20 @@
     [...el.chips.children].forEach((c) =>
       c.setAttribute('aria-selected', String(c.dataset.cat === id))
     );
+    const dropped = renderAuthors();     // may reset the pick if it doesn't exist here
     rebuildPool();
+
     state.history = [];
     state.cursor = -1;
     state.isToday = false;
     haptic(8);
     nextQuote(1);
     closeDrawer();
+
+    if (dropped) {
+      const label = (CATEGORIES.find((c) => c.id === id) || {}).label || id;
+      toast(`${dropped} has nothing in ${label}`);
+    }
   }
 
   /* ---------------------------------------------------------------------- *
@@ -779,6 +867,7 @@
       toast('Quote of the day');
     });
 
+    el.authorSel.addEventListener('change', (e) => selectAuthor(e.target.value));
     el.themeBtn.addEventListener('click', toggleTheme);
     el.favViewBtn.addEventListener('click', toggleDrawer);
     el.favViewBtn2.addEventListener('click', toggleDrawer);

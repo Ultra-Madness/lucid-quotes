@@ -81,6 +81,19 @@
 
     <!-- Category chips -->
     <div class="chips" id="chips" role="tablist" aria-label="Categories"></div>
+
+    <!-- Thinker filter: scoped to whatever category is active -->
+    <div class="filters">
+      <div class="select-wrap">
+        <select id="authorSelect" aria-label="Filter by thinker">
+          <option value="all">All thinkers</option>
+        </select>
+        <svg class="select-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="pool-count" id="poolCount" aria-live="polite"></span>
+    </div>
   </header>
 
   <!-- Stage: the quote deck -->
