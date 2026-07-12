@@ -144,6 +144,12 @@ Bump it on every change, and add a line below.
 
 ## Changelog
 
+**v1.3.1** — Service-worker fixes. (a) Every GitHub Pages project you own shares one origin,
+and the old cleanup deleted *every* cache on it, including other apps'. It now only deletes its
+own. (b) GitHub Pages serves with `max-age=600`, so "network-first" was quietly being answered
+from the browser's HTTP cache — fetches now use `cache: 'reload'`. (c) The page reloads itself
+once when a new build takes over, so you see the new version instead of a stale one.
+
 **v1.3.0** — Deepened the library to 202 quotes. 13 thinkers now have 8–13 quotes each
 spanning 4–5 categories, so the thinker filter has something to chew on. Added the version chip.
 

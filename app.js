@@ -26,7 +26,7 @@
    * your phone whether the deploy actually landed. Shown next to the
    * wordmark. Keep it in step with the changelog at the end of README.
    * ------------------------------------------------------------------ */
-  const VERSION = '1.3.0';
+  const VERSION = '1.3.1';
 
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 
@@ -942,8 +942,22 @@
   function registerSW() {
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol === 'file:') return;     // SW can't run from file://
+
+    /* When a new build takes over, reload once so you actually SEE it.
+       Without this, a fresh service worker activates but the open page keeps
+       rendering the old shell — which is exactly how you end up staring at a
+       stale version number wondering whether the deploy worked. */
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
+
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => { /* offline is a bonus */ });
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => reg.update())               // check for a new build on every open
+        .catch(() => { /* offline is a bonus, not a requirement */ });
     });
   }
 

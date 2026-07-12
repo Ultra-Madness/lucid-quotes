@@ -1,9 +1,21 @@
 /* Lucid — service worker.
-   App shell is cached on install so Lucid works offline / on the subway.
-   Bump CACHE when you change app.js, styles.css or index.html.
-   (quotes.js is network-first, so new quotes show up immediately.) */
 
-const CACHE = 'lucid-v1.3.0';
+   Two things here are load-bearing; don't "simplify" them away:
+
+   1. CACHE_PREFIX. Every project you publish to GitHub Pages lives on the SAME
+      origin (ultra-madness.github.io), so they all share one cache store. If we
+      cleaned up by deleting "every cache that isn't ours", we'd nuke the offline
+      cache of your other apps. We only ever delete OUR OWN old caches.
+
+   2. cache: 'reload' on the network fetches. GitHub Pages serves assets with
+      max-age=600, so a plain fetch() can be answered from the browser's HTTP
+      cache with a stale file for ten minutes after a deploy — which makes a
+      "network-first" strategy quietly serve old content. 'reload' bypasses it.
+
+   CI stamps CACHE with a build timestamp on every deploy. */
+
+const CACHE_PREFIX = 'lucid-';
+const CACHE = 'lucid-v1.3.1';
 
 const SHELL = [
   './',
@@ -20,7 +32,9 @@ const SHELL = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(SHELL))
+      // 'reload' = go to the network, ignore the HTTP cache. Without this the
+      // shell can be cached stale straight out of the browser's own cache.
+      .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
       .catch(() => self.skipWaiting())
   );
@@ -29,7 +43,11 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(
+        keys
+          .filter((k) => k.startsWith(CACHE_PREFIX) && k !== CACHE)   // ONLY our own
+          .map((k) => caches.delete(k))
+      ))
       .then(() => self.clients.claim())
   );
 });
@@ -39,11 +57,14 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
+  if (url.origin !== location.origin) return;      // leave fonts/CDNs alone
+  if (!url.pathname.startsWith(new URL('./', location).pathname)) return;  // not our scope
 
-  // Quotes: network-first, so edits from your phone appear right away.
+  // Quotes: network-first, bypassing the HTTP cache, so edits from your phone
+  // show up on the next open instead of ten minutes later.
   if (url.pathname.endsWith('quotes.js')) {
     e.respondWith(
-      fetch(req)
+      fetch(new Request(req.url, { cache: 'reload' }))
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));
@@ -60,7 +81,7 @@ self.addEventListener('fetch', (e) => {
       if (hit) return hit;
       return fetch(req)
         .then((res) => {
-          if (res && res.status === 200 && (res.type === 'basic' || res.type === 'cors')) {
+          if (res && res.status === 200 && res.type === 'basic') {
             const copy = res.clone();
             caches.open(CACHE).then((c) => c.put(req, copy));
           }
