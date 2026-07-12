@@ -140,12 +140,15 @@ whether a deploy actually landed. It lives in exactly one place:
 
 ```js
 // app.js, near the top
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 ```
 
 Bump it on every change, and add a line below.
 
 ## Changelog
+
+**v1.5.1** — Thinker dropdown is now alphabetical (was sorted by quote count). Sorted on the
+displayed name, not surname, so the mononyms — Plato, Seneca, Cicero — don't get stranded.
 
 **v1.5.0** — 503 quotes, 118 thinkers. New **Power & Strategy** category (71 quotes, 27 thinkers):
 Sun Tzu, Machiavelli, Clausewitz, Napoleon, Caesar, Lincoln, Sowell, Thiel, Lee Kuan Yew.

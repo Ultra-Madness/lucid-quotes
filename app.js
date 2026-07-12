@@ -31,7 +31,7 @@
    * your phone whether the deploy actually landed. Shown next to the
    * wordmark. Keep it in step with the changelog at the end of README.
    * ------------------------------------------------------------------ */
-  const VERSION = '1.5.0';
+  const VERSION = '1.5.1';
 
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 
@@ -231,7 +231,10 @@
     src.forEach((q) => counts.set(q.a, (counts.get(q.a) || 0) + 1));
     return [...counts.entries()]
       .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      // Alphabetical by the name as it's DISPLAYED. Sorting by surname would
+      // strand the mononyms - Plato, Seneca, Cicero, Confucius - and make the
+      // list unscannable. This way it reads straight down, A to Z.
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   }
 
   /** Rebuilds the options for the current category. Returns the dropped
