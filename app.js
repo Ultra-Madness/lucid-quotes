@@ -21,6 +21,13 @@
     { id: 'humor',       label: 'Humor',       dark: '#fbbf24', light: '#c2740a' }
   ];
 
+  /* ------------------------------------------------------------------ *
+   * VERSION — bump this on every change, so you can see at a glance on
+   * your phone whether the deploy actually landed. Shown next to the
+   * wordmark. Keep it in step with the changelog at the end of README.
+   * ------------------------------------------------------------------ */
+  const VERSION = '1.3.0';
+
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 
   const LS_FAVS  = 'lucid.favs.v1';
@@ -52,6 +59,7 @@
     favViewBtn2: $('favViewBtn2'),
     themeBtn:    $('themeBtn'),
     themeColor:  $('themeColor'),
+    brandVer:    $('brandVer'),
     authorSel:   $('authorSelect'),
     poolCount:   $('poolCount'),
     favCount:    $('favCount'),
@@ -91,6 +99,8 @@
       el.quoteAuthor.textContent = '—';
       return;
     }
+
+    if (el.brandVer) el.brandVer.textContent = 'v' + VERSION;
 
     initTheme();
     renderChips();

@@ -3,7 +3,7 @@
    Bump CACHE when you change app.js, styles.css or index.html.
    (quotes.js is network-first, so new quotes show up immediately.) */
 
-const CACHE = 'lucid-v3-thinkers';
+const CACHE = 'lucid-v1.3.0';
 
 const SHELL = [
   './',

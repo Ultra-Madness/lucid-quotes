@@ -130,4 +130,32 @@ Swap the serif in `index.html` (the Google Fonts link) and in `styles.css` (`.qu
 
 ---
 
+## Versioning
+
+The version shows next to the **Lucid** wordmark in the app, so you can tell on your phone
+whether a deploy actually landed. It lives in exactly one place:
+
+```js
+// app.js, near the top
+const VERSION = '1.3.0';
+```
+
+Bump it on every change, and add a line below.
+
+## Changelog
+
+**v1.3.0** — Deepened the library to 202 quotes. 13 thinkers now have 8–13 quotes each
+spanning 4–5 categories, so the thinker filter has something to chew on. Added the version chip.
+
+**v1.2.0** — Thinker filter. A dropdown, scoped to the active category, that narrows the deck
+to a single thinker. Live pool count.
+
+**v1.1.0** — Light/dark theme toggle. Follows the OS by default; a manual pick overrides and
+persists. Theme set before first paint, so no flash. Share cards follow the theme.
+
+**v1.0.0** — Initial release. Swipe deck, six categories, quote of the day, favorites,
+canvas share cards, installable offline PWA.
+
+---
+
 MIT licensed. Quotes are short, widely-circulated attributions used for commentary and inspiration.

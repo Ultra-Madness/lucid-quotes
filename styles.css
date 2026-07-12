@@ -246,6 +246,21 @@ body {
   text-transform: uppercase;
 }
 
+/* Version chip - so you can tell at a glance whether an update landed */
+.brand__ver {
+  margin-left: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: var(--fill);
+  color: var(--ink-3);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
 .topbar__actions { display: flex; gap: 8px; }
 
 .icon-btn {
@@ -660,6 +675,7 @@ body {
 }
 @media (max-height: 500px) {
   .brand__name { display: none; }
+  .brand__ver { display: none; }
   .dock-btn span { display: none; }
   .pool-count { display: none; }
   #authorSelect { max-width: 100%; padding-block: 5px; }
