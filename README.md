@@ -69,7 +69,10 @@ Everything you'd want to change day-to-day lives in **`quotes.js`**.
    ```
 5. **Commit changes** → the Action runs → your live site updates in about 40 seconds.
 
-Valid categories: `inspiration`, `stoic`, `humor`, `wisdom`, `creativity`, `grit`.
+Valid categories: `inspiration`, `stoic`, `wisdom`, `grit`, `creativity`, `humor`, `time`, `love`, `doubt`, `solitude`.
+
+A quote can sit in several at once — `c: ["stoic", "time"]` — so tagging is additive, not a
+zero-sum split. A plain string still works for single-category quotes.
 
 The workflow runs `node --check quotes.js` first, so if you fumble a comma the deploy fails loudly instead of shipping a blank screen.
 
@@ -137,12 +140,20 @@ whether a deploy actually landed. It lives in exactly one place:
 
 ```js
 // app.js, near the top
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 ```
 
 Bump it on every change, and add a line below.
 
 ## Changelog
+
+**v1.4.0** — 334 quotes, 79 thinkers. Four new categories: **Time**, **Love**, **Doubt**,
+**Solitude**. Quotes can now carry multiple categories (`c: ["stoic","time"]`), so Seneca on
+mortality shows up under both. Sixteen new thinkers, all public domain in both the work *and*
+the English: Gibran, Thoreau, Montaigne, van Gogh, Douglass, Austen, Franklin, Whitman,
+Dickinson, Pascal, Cicero, Epicurus, Eliot, Woolf, Keller, Heraclitus.
+**Removed all Rumi** — the famous English lines are Coleman Barks's copyrighted "versions"
+(© 1995), not public-domain translations. **Removed the two Buddha quotes** — both apocryphal.
 
 **v1.3.1** — Service-worker fixes. (a) Every GitHub Pages project you own shares one origin,
 and the old cleanup deleted *every* cache on it, including other apps'. It now only deletes its
@@ -164,4 +175,17 @@ canvas share cards, installable offline PWA.
 
 ---
 
-MIT licensed. Quotes are short, widely-circulated attributions used for commentary and inspiration.
+## A note on attribution
+
+Two rules the library is built on. Please keep to them when you add quotes:
+
+1. **Don't invent quotes, and don't force a thinker into a category they never spoke to.**
+   The Stoics have no humour quotes, so they don't appear under Humor. A gap beats a fake.
+2. **For translated authors, the translation carries its own copyright** even when the author
+   is ancient. Rumi died in 1273, but the English everyone quotes is Coleman Barks's rendering,
+   © 1995 — which is why there's no Rumi here. Prefer authors who wrote in English, or
+   pre-1930 translations. As of 2026, US works published 1930 or earlier are public domain.
+
+---
+
+MIT licensed.

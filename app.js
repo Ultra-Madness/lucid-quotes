@@ -18,7 +18,11 @@
     { id: 'wisdom',      label: 'Wisdom',      dark: '#60a5fa', light: '#2563eb' },
     { id: 'grit',        label: 'Grit',        dark: '#fb7185', light: '#e11d48' },
     { id: 'creativity',  label: 'Creativity',  dark: '#f472b6', light: '#db2777' },
-    { id: 'humor',       label: 'Humor',       dark: '#fbbf24', light: '#c2740a' }
+    { id: 'humor',       label: 'Humor',       dark: '#fbbf24', light: '#c2740a' },
+    { id: 'time',        label: 'Time',        dark: '#94a3b8', light: '#475569' },
+    { id: 'love',        label: 'Love',        dark: '#fda4af', light: '#be123c' },
+    { id: 'doubt',       label: 'Doubt',       dark: '#818cf8', light: '#4338ca' },
+    { id: 'solitude',    label: 'Solitude',    dark: '#6ee7b7', light: '#047857' }
   ];
 
   /* ------------------------------------------------------------------ *
@@ -26,7 +30,7 @@
    * your phone whether the deploy actually landed. Shown next to the
    * wordmark. Keep it in step with the changelog at the end of README.
    * ------------------------------------------------------------------ */
-  const VERSION = '1.3.1';
+  const VERSION = '1.4.0';
 
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 
@@ -76,7 +80,15 @@
    * State
    * ---------------------------------------------------------------------- */
 
-  const ALL = (window.QUOTES || []).map((q, i) => ({ ...q, id: hashId(q.t) || 'q' + i }));
+  /* A quote's `c` may be a string ("humor") or an array (["stoic","time"]).
+     Normalise once here; everything downstream reads q.cats, always an array. */
+  const normalize = (q, i) => ({
+    ...q,
+    cats: Array.isArray(q.c) ? q.c : [q.c],
+    id: hashId(q.t) || 'q' + i
+  });
+
+  const ALL = (window.QUOTES || []).map(normalize);
 
   const state = {
     category: loadCategory(),
@@ -167,8 +179,21 @@
     el.themeBtn.setAttribute('aria-label', light ? 'Switch to dark theme' : 'Switch to light theme');
   }
 
+  /* Which of a quote's categories is the RELEVANT one right now? If you're
+     filtered to Time, a Seneca line reads as Time, not as Stoic. Otherwise we
+     fall back to its primary (first) category. This drives the pill, the
+     accent colour, the aurora, and the share card. */
+  function activeCat(q) {
+    if (state.category !== 'all' && q.cats.includes(state.category)) return state.category;
+    return q.cats[0];
+  }
+
+  function catOf(q) {
+    return CATEGORIES.find((c) => c.id === activeCat(q)) || CATEGORIES[0];
+  }
+
   function accentFor(q) {
-    const cat = CATEGORIES.find((c) => c.id === q.c) || CATEGORIES[0];
+    const cat = catOf(q);
     return cat[currentTheme()] || cat.dark;
   }
 
@@ -179,7 +204,7 @@
   function rebuildPool() {
     let list = state.category === 'all'
       ? ALL.slice()
-      : ALL.filter((q) => q.c === state.category);
+      : ALL.filter((q) => q.cats.includes(state.category));
 
     if (state.author !== 'all') {
       const byAuthor = list.filter((q) => q.a === state.author);
@@ -200,7 +225,7 @@
    */
 
   function authorsIn(categoryId) {
-    const src = categoryId === 'all' ? ALL : ALL.filter((q) => q.c === categoryId);
+    const src = categoryId === 'all' ? ALL : ALL.filter((q) => q.cats.includes(categoryId));
     const counts = new Map();
     src.forEach((q) => counts.set(q.a, (counts.get(q.a) || 0) + 1));
     return [...counts.entries()]
@@ -310,7 +335,7 @@
 
   function render(q, dir = 1) {
     if (!q) return;
-    const cat = CATEGORIES.find((c) => c.id === q.c) || CATEGORIES[0];
+    const cat = catOf(q);
 
     setAccent(accentFor(q));
 
@@ -428,8 +453,12 @@
    * ---------------------------------------------------------------------- */
 
   function loadFavs() {
-    try { return JSON.parse(localStorage.getItem(LS_FAVS)) || []; }
-    catch { return []; }
+    try {
+      const raw = JSON.parse(localStorage.getItem(LS_FAVS)) || [];
+      // Favourites saved before multi-tag have `c` but no `cats`. Re-resolve
+      // each against the live library by id so old saves keep working.
+      return raw.map((f, i) => ALL.find((q) => q.id === f.id) || normalize(f, i));
+    } catch { return []; }
   }
   function saveFavs() {
     try { localStorage.setItem(LS_FAVS, JSON.stringify(state.favs)); } catch { /* private mode */ }
