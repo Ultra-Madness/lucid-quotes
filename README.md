@@ -140,12 +140,18 @@ whether a deploy actually landed. It lives in exactly one place:
 
 ```js
 // app.js, near the top
-const VERSION = '1.5.1';
+const VERSION = '1.5.2';
 ```
 
 Bump it on every change, and add a line below.
 
 ## Changelog
+
+**v1.5.2** — New app icon (philosopher + speech bubble + wordmark). Shipped as a full-bleed
+square rather than pre-rounded: every home screen applies its own mask, so baking in our own
+corners risks double-rounding and white wedges. The maskable variant pulls the art into the
+middle 78% so Android's circle crop can't slice the beard or the wordmark, and the
+apple-touch-icon is opaque because iOS renders transparency as black.
 
 **v1.5.1** — Thinker dropdown is now alphabetical (was sorted by quote count). Sorted on the
 displayed name, not surname, so the mononyms — Plato, Seneca, Cicero — don't get stranded.

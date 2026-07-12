@@ -31,7 +31,7 @@
    * your phone whether the deploy actually landed. Shown next to the
    * wordmark. Keep it in step with the changelog at the end of README.
    * ------------------------------------------------------------------ */
-  const VERSION = '1.5.1';
+  const VERSION = '1.5.2';
 
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 

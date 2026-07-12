@@ -15,7 +15,7 @@
    CI stamps CACHE with a build timestamp on every deploy. */
 
 const CACHE_PREFIX = 'lucid-';
-const CACHE = 'lucid-v1.5.1';
+const CACHE = 'lucid-v1.5.2';
 
 const SHELL = [
   './',
@@ -24,9 +24,11 @@ const SHELL = [
   './app.js',
   './quotes.js',
   './manifest.webmanifest',
-  './icons/icon.svg',
   './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png'
 ];
 
 self.addEventListener('install', (e) => {
