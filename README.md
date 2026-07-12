@@ -69,7 +69,7 @@ Everything you'd want to change day-to-day lives in **`quotes.js`**.
    ```
 5. **Commit changes** → the Action runs → your live site updates in about 40 seconds.
 
-Valid categories: `inspiration`, `stoic`, `wisdom`, `grit`, `creativity`, `humor`, `time`, `love`, `doubt`, `solitude`.
+Valid categories: `inspiration`, `stoic`, `wisdom`, `grit`, `creativity`, `humor`, `power`, `time`, `love`, `doubt`, `solitude`.
 
 A quote can sit in several at once — `c: ["stoic", "time"]` — so tagging is additive, not a
 zero-sum split. A plain string still works for single-category quotes.
@@ -140,12 +140,20 @@ whether a deploy actually landed. It lives in exactly one place:
 
 ```js
 // app.js, near the top
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 ```
 
 Bump it on every change, and add a line below.
 
 ## Changelog
+
+**v1.5.0** — 503 quotes, 118 thinkers. New **Power & Strategy** category (71 quotes, 27 thinkers):
+Sun Tzu, Machiavelli, Clausewitz, Napoleon, Caesar, Lincoln, Sowell, Thiel, Lee Kuan Yew.
+Public-domain additions: Plato, Aquinas, King Solomon, Jesus of Nazareth, King David, Washington,
+Jefferson, Adam Smith, Marx, and the commanders. Modern additions (copyrighted, used as short
+attributed quotations): Viktor Frankl, Charlie Munger, Naval Ravikant, Thomas Sowell, Friedman,
+Hayek, Dalio, Thiel, Jocko Willink, David Goggins, Jordan Peterson, Sam Harris, Douglas Murray,
+Bret Weinstein, Gandhi, Craig Ferguson.
 
 **v1.4.0** — 334 quotes, 79 thinkers. Four new categories: **Time**, **Love**, **Doubt**,
 **Solitude**. Quotes can now carry multiple categories (`c: ["stoic","time"]`), so Seneca on
@@ -185,6 +193,11 @@ Two rules the library is built on. Please keep to them when you add quotes:
    is ancient. Rumi died in 1273, but the English everyone quotes is Coleman Barks's rendering,
    © 1995 — which is why there's no Rumi here. Prefer authors who wrote in English, or
    pre-1930 translations. As of 2026, US works published 1930 or earlier are public domain.
+3. **Two names are deliberately absent.** *Martin Luther King Jr.* — his estate actively licenses
+   and enforces his words, and MLK quotes are the most litigated in this space; that's a legal
+   caution, not a judgment. *Adolf Hitler, Stalin, Mao, Idi Amin* — a card that pairs a line with
+   a name endorses the voice, and the Share button turns that pairing into an image built to
+   travel. Studying them is one thing; quoting them as wisdom is another.
 
 ---
 

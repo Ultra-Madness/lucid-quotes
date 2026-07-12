@@ -15,7 +15,7 @@
    CI stamps CACHE with a build timestamp on every deploy. */
 
 const CACHE_PREFIX = 'lucid-';
-const CACHE = 'lucid-v1.4.0';
+const CACHE = 'lucid-v1.5.0';
 
 const SHELL = [
   './',

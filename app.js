@@ -19,6 +19,7 @@
     { id: 'grit',        label: 'Grit',        dark: '#fb7185', light: '#e11d48' },
     { id: 'creativity',  label: 'Creativity',  dark: '#f472b6', light: '#db2777' },
     { id: 'humor',       label: 'Humor',       dark: '#fbbf24', light: '#c2740a' },
+    { id: 'power',       label: 'Power',       dark: '#d6b370', light: '#92400e' },
     { id: 'time',        label: 'Time',        dark: '#94a3b8', light: '#475569' },
     { id: 'love',        label: 'Love',        dark: '#fda4af', light: '#be123c' },
     { id: 'doubt',       label: 'Doubt',       dark: '#818cf8', light: '#4338ca' },
@@ -30,7 +31,7 @@
    * your phone whether the deploy actually landed. Shown next to the
    * wordmark. Keep it in step with the changelog at the end of README.
    * ------------------------------------------------------------------ */
-  const VERSION = '1.4.0';
+  const VERSION = '1.5.0';
 
   const THEME_BG = { dark: '#08080b', light: '#f2efe9' };
 
